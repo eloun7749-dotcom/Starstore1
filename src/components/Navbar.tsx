@@ -13,19 +13,29 @@ const navLinks = [
 ]
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false)
-  const [mobileOpen, setMobileOpen] = useState(false)
   const { totalItems, openCart } = useCart()
   const location = useLocation()
   const isHome = location.pathname === '/'
+  const [heroActive, setHeroActive] = useState(isHome)
+  const [mobileOpen, setMobileOpen] = useState(false)
 
+  // Cinematic header treatment only while the homepage Hero is on screen
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40)
-    window.addEventListener('scroll', onScroll)
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+    const update = () => {
+      const hero = document.getElementById('hero')
+      const heroEnd = hero ? hero.offsetHeight - window.innerHeight : 0
+      setHeroActive(isHome && window.scrollY < heroEnd)
+    }
+    update()
+    window.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+    }
+  }, [isHome])
 
-  const transparent = isHome && !scrolled
+  const transparent = heroActive
 
   return (
     <>

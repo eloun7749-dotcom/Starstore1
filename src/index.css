@@ -31,6 +31,11 @@
     @apply font-sans font-semibold uppercase tracking-[0.15em] text-xs;
   }
 
+  /* Persian hero typography — scoped to the Hero only */
+  .font-hero-fa {
+    font-family: 'Vazirmatn', 'Tahoma', sans-serif;
+  }
+
   .btn-primary {
     @apply inline-flex items-center gap-2 rounded-full bg-espresso px-8 py-4 text-sm font-medium text-cream transition-all duration-500 hover:bg-shadow-olive hover:pr-10;
   }
