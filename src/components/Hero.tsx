@@ -13,6 +13,7 @@ export default function Hero() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const fadeRef = useRef<HTMLDivElement>(null)
   const ticking = useRef(false)
+  const failed = useRef(false)
 
   useEffect(() => {
     const container = containerRef.current
@@ -43,11 +44,24 @@ export default function Hero() {
       const scrollable = rect.height - window.innerHeight
       const progress = Math.min(1, Math.max(0, -rect.top / (scrollable || 1)))
 
-      if (!reducedMotion && duration > 0) {
-        const target = Math.min(progress * duration, Math.max(0, duration - 0.05))
+      if (!reducedMotion && duration > 0 && !failed.current) {
+        // progress * duration, clamped to the closest valid seekable time
+        let target = progress * duration
+        try {
+          if (video.seekable.length > 0) {
+            target = Math.min(target, video.seekable.end(video.seekable.length - 1))
+          }
+        } catch {
+          /* seekable ranges unavailable — fall through to duration clamp */
+        }
+        target = Math.min(target, Math.max(0, duration - 0.05))
         // Only seek when the change is meaningful to avoid seek-queue thrash
         if (Math.abs(video.currentTime - target) > 0.03) {
-          video.currentTime = target
+          try {
+            video.currentTime = target
+          } catch {
+            /* metadata not ready / seek rejected — next rAF retries */
+          }
         }
       }
 
@@ -82,16 +96,22 @@ export default function Hero() {
           ref={videoRef}
           src={VIDEO_SRC}
           muted
+          autoPlay={false}
+          loop={false}
           playsInline
           preload="auto"
           controls={false}
           disablePictureInPicture
-          className="absolute inset-0 w-full h-full object-cover"
+          onError={() => {
+            // Video unavailable — keep the layout and espresso fallback background
+            failed.current = true
+          }}
+          className="absolute inset-0 w-full h-full object-cover object-center"
           aria-hidden="true"
         />
 
-        {/* Subtle readability gradient — kept light */}
-        <div className="absolute inset-0 bg-gradient-to-r from-espresso/60 via-espresso/25 to-espresso/10" />
+        {/* Localized readability gradient behind the text column only — product stays clear */}
+        <div className="absolute inset-y-0 left-0 w-[70%] md:w-[52%] bg-gradient-to-r from-espresso/75 via-espresso/35 to-transparent" />
 
         {/* Hero content — same copy, typography and entrance animation as before */}
         <div ref={fadeRef} className="absolute inset-0 z-10">
